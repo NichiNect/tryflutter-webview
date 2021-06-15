@@ -1,8 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.tryflutter">
+    <uses-permission android:name="android.permission.INTERNET"/>
    <application
-        android:label="tryflutter"
-        android:icon="@mipmap/ic_launcher">
+        android:label="Simbah SMKN 1 Jenpo"
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"

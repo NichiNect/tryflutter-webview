@@ -1,11 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-void main() => runApp(MaterialApp(
-  debugShowCheckedModeBanner: false,
-  home: WebViewExample())
-);
+void main() => runApp(
+    MaterialApp(debugShowCheckedModeBanner: false, home: WebViewExample()));
 
 class WebViewExample extends StatefulWidget {
   @override
@@ -18,6 +18,7 @@ Future<bool> _exitApp(BuildContext context) async {
   if (await controllerGlobal.canGoBack()) {
     // Back Button
     controllerGlobal.goBack();
+    return Future.value(false);
   } else {
     Scaffold.of(context).showSnackBar(
       const SnackBar(content: Text("No Back History")),
@@ -28,37 +29,60 @@ Future<bool> _exitApp(BuildContext context) async {
 
 class _WebViewExampleState extends State<WebViewExample> {
   final Completer<WebViewController> _controller =
-  Completer<WebViewController>();
+      Completer<WebViewController>();
+
+  @override
+  void initState() {
+    super.initState();
+    if (Platform.isAndroid) WebView.platform = SurfaceAndroidWebView();
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+    ));
+  }
+
+  bool isLoading = true;
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () => _exitApp(context),
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Flutter WebView'),
-          // This drop down menu demonstrates that Flutter widgets can be shown over the web view.
-          actions: <Widget>[
-            NavigationControls(_controller.future),
-            SampleMenu(_controller.future,),
-          ],
-        ),
-        // We're using a Builder here so we have a context that is below the Scaffold
-        // to allow calling Scaffold.of(context) so we can show a snackbar.
+        // appBar: AppBar(
+        //   title: const Text('SIMBAH App'),
+        //   actions: <Widget>[
+        //     NavigationControls(_controller.future),
+        //     SampleMenu(_controller.future),
+        //   ],
+        // ),
         body: Builder(builder: (BuildContext context) {
-          return WebView(
-            initialUrl: "https://learning.smkn1jenpo.sch.id",
-            javascriptMode: JavascriptMode.unrestricted,
-            onWebViewCreated: (WebViewController webViewController) {
-              _controller.complete(webViewController);
-            },
-            javascriptChannels: <JavascriptChannel>[
-              _toasterJavascriptChannel(context),
-            ].toSet(),
-            onPageFinished: (String url) {
-              print('Page finished loading: $url');
-            },
-          );
+          return Stack(children: [
+            NavigationControls(_controller.future),
+            WebView(
+              initialUrl: "https://simbah.smkn1jenpo.sch.id",
+              javascriptMode: JavascriptMode.unrestricted,
+              onWebViewCreated: (WebViewController webViewController) {
+                _controller.complete(webViewController);
+              },
+              javascriptChannels: <JavascriptChannel>[
+                _toasterJavascriptChannel(context),
+              ].toSet(),
+              onPageStarted: (start) {
+                setState(() {
+                  isLoading = true;
+                });
+              },
+              onPageFinished: (finish) {
+                setState(() {
+                  isLoading = false;
+                });
+              },
+            ),
+            isLoading
+                ? Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : Stack(),
+          ]);
         }),
       ),
     );
@@ -73,7 +97,6 @@ class _WebViewExampleState extends State<WebViewExample> {
           );
         });
   }
-
 }
 
 enum MenuOptions {
@@ -171,7 +194,7 @@ class SampleMenu extends StatelessWidget {
   void _onListCookies(
       WebViewController controller, BuildContext context) async {
     final String cookies =
-    await controller.evaluateJavascript('document.cookie');
+        await controller.evaluateJavascript('document.cookie');
     Scaffold.of(context).showSnackBar(SnackBar(
       content: Column(
         mainAxisAlignment: MainAxisAlignment.end,
@@ -222,7 +245,7 @@ class SampleMenu extends StatelessWidget {
     }
     final List<String> cookieList = cookies.split(';');
     final Iterable<Text> cookieWidgets =
-    cookieList.map((String cookie) => Text(cookie));
+        cookieList.map((String cookie) => Text(cookie));
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
@@ -230,8 +253,6 @@ class SampleMenu extends StatelessWidget {
     );
   }
 }
-
-
 
 class NavigationControls extends StatelessWidget {
   const NavigationControls(this._webViewControllerFuture)
@@ -250,17 +271,20 @@ class NavigationControls extends StatelessWidget {
         final WebViewController controller = snapshot.data;
         controllerGlobal = controller;
 
-        return Row(
-          children: <Widget>[
-            IconButton(
-              icon: const Icon(Icons.replay),
-              onPressed: !webViewReady
-                  ? null
-                  : () {
-                controller.reload();
-              },
-            ),
-          ],
+        // return Row(
+        //   children: <Widget>[
+        //     // IconButton(
+        //     //   icon: const Icon(Icons.replay),
+        //     //   onPressed: !webViewReady
+        //     //       ? null
+        //     //       : () {
+        //     //           controller.reload();
+        //     //         },
+        //     // ),
+        //   ],
+        // );
+        return SizedBox(
+          width: 40,
         );
       },
     );
